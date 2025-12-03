@@ -1,7 +1,6 @@
 from os import getenv
 from gigachat import GigaChat
 from gigachat.models import Messages, MessagesRole
-import asyncio
 
 
 giga = GigaChat(credentials=getenv('GIGACHAT_KEY'),
@@ -9,12 +8,16 @@ giga = GigaChat(credentials=getenv('GIGACHAT_KEY'),
                 model='GigaChat-2',
                 )
 
-system_prompt = 'Ты бот-анализатор новостей. Твоя задача проанализировать общий эмоциональный окрас новостей, выделить ключевые слова и написать краткую сводку.'
-messages = [Messages(role=MessagesRole.SYSTEM, content=system_prompt)]
+SYSTEM_PROMPT = 'Ты бот-анализатор новостей. Твоя задача проанализировать общий эмоциональный окрас новостей, выделить ключевые слова и написать краткую сводку.'
+messages = [Messages(role=MessagesRole.SYSTEM, content=SYSTEM_PROMPT)]
 
 
 async def ai_request(message):
-    resp = await asyncio.to_thread(giga.chat, message)
+    resp = await giga.achat(message)
     answer = resp.choices[0].message.content
     
     return answer
+
+
+async def analyze_news(news: dict) -> dict:
+    pass
