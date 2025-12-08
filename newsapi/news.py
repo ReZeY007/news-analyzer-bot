@@ -1,7 +1,8 @@
 from os import getenv
-from unicodedata import normalize
 from newsdataapi import NewsDataApiClient
-from aiogram.utils.formatting import Text, Bold, TextLink
+import json
+
+from ai.ai import analyze_news as ai_analyze
 
 api = NewsDataApiClient(apikey=getenv('NEWS_API_KEY'))
 
@@ -16,17 +17,21 @@ def get_news(topic: str, size: int = 5) -> list:
     
     return news
 
-# transforms news (one article) dictionary to aiogram's Text object
-def format_news(news: dict) -> Text:
-    title = ''
-    description = ''
-    link = ''
-    if news['title']:
-        title = normalize('NFC', news['title'])
-    if news['description']:
-        description = normalize('NFC', news['description'])
-    if news['link']:
-        link = news['link']
+
+async def analyze_news(news: dict):
+    prepared_news = list()
+    news_string = str()
+
+    for n in news:
+        prepared_news.append(f'Заголовок:\n{n['title']}\nОписание:\n{n['description']}\nКлючевые слова:\n{n['keywords']}\n\n')
+
+    for n in prepared_news:
+        news_string += n    
+
+    print(prepared_news)
+    response = await ai_analyze(news_string)
+    response = json.loads(response)
+
+
+    return response
     
-    text = Text(Bold(title) + ' (' + TextLink('Ссылка', url=link) + ')' + '\n' * 2, description)
-    return text
