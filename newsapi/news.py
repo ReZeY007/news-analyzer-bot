@@ -13,12 +13,15 @@ def get_news(topic: str, size: int = 5) -> list:
     if response['status'] == 'success':
         news = response['results']
     else:
-        raise Exception('NewsDataAPI error')
+        raise Exception('Getting news issue')
     
+    if len(news) == 0:
+        raise Exception('No news')
+
     return news
 
 
-async def analyze_news(news: dict):
+async def analyze_news(news: dict) -> dict:
     prepared_news = list()
     news_string = str()
 
@@ -27,11 +30,9 @@ async def analyze_news(news: dict):
 
     for n in prepared_news:
         news_string += n    
-
-    print(prepared_news)
+    
     response = await ai_analyze(news_string)
     response = json.loads(response)
-
 
     return response
     

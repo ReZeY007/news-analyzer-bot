@@ -18,5 +18,13 @@ def format_news(news: dict) -> Text:
     return text
 
 
-def format_analyzis():
-    pass
+def format_analyzis(news: dict) -> Text:
+    sentiment = news['sentiment']
+    keywords = ', '.join(news['keywords'])
+    summary = news['summary']
+
+    formated_news = Text('Эмоциональный окрас: ', Bold(sentiment), '\n' +
+                         'Ключевые слова: ', Bold(keywords), '\n' * 2 +
+                         summary)
+
+    return formated_news

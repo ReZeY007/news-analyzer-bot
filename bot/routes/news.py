@@ -23,15 +23,20 @@ async def command_findnews_handler(message: Message, state: FSMContext) -> None:
 async def handle_news_message(message: Message, state: FSMContext):
     data = await state.get_data()
     command = data['command']
-    news = get_news(message.text)
 
-    match command.command:
-        case 'findnews':
-            await send_news(message=message, news=news)
-        case 'analyzenews':
-            await send_news_analyzis(message=message, news=news)
-   
-    await state.clear()
+    try:
+        news = get_news(message.text)
+
+        match command.command:
+            case 'findnews':
+                await send_news(message=message, news=news)
+            case 'analyzenews':
+                await send_news_analyzis(message=message, news=news)
+
+        await state.clear()
+    except Exception:
+        await message.answer("К сожалению, мы ничего не нашли по вашему запросу. Попробуйте еще раз.")
+        await message.answer('Отправьте тему новости')
 
 
 @news.message(Command(analyzenews_command))
@@ -48,4 +53,7 @@ async def send_news(message: Message, news: dict) -> None:
 
 
 async def send_news_analyzis(message: Message, news: dict) -> None:
-    await analyze_news(news)
+    analyzis = await analyze_news(news)
+    formated_analyzis = format_analyzis(analyzis)
+
+    await message.answer(**formated_analyzis.as_kwargs())

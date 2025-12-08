@@ -34,5 +34,5 @@ async def analyze_news(news: str) -> str:
     json = resp.choices[0].message.content
 
     payload.messages.pop()
-    print(json)
+    
     return json
