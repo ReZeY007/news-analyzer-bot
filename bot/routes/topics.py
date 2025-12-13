@@ -44,8 +44,6 @@ async def handle_topic_message(message: Message, state: FSMContext) -> None:
             await process_topic(message=message, topic=message.text, state=state)
         case 'savetopic':
             save_topic(topic_str=message.text, user_id=message.from_user.id)
-        case 'deletetopic':
-            pass
 
     await state.clear()
 
