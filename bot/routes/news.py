@@ -44,8 +44,8 @@ async def process_topic(message: Message, topic: str, state: FSMContext) -> None
                 await send_news_analyzis(message=message, news=news)
     except Exception:
         await message.answer("К сожалению, мы ничего не нашли по вашему запросу. Попробуйте еще раз.")
-        await message.answer('Выберете тему из сохранненых или напишите новую.')
-        await send_topics_list(message=message)
+        # await message.answer('Выберете тему из сохранненых или напишите новую.')
+        # await send_topics_list(message=message)
 
 
 async def send_news(message: Message, news: dict) -> None:
