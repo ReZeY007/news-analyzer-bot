@@ -4,6 +4,7 @@ import sys
 from dotenv import load_dotenv
 load_dotenv()
 
+import database
 from bot.bot import bot, dp
 from bot.commands import commands
 
