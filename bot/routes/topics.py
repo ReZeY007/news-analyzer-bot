@@ -27,7 +27,7 @@ async def command_deletetopic_handler(message: Message, state=FSMContext) -> Non
     await state.set_state(MainStates.waiting_for_topic)
 
     await message.answer('Выбери тему, которую хочешь удалить.')
-    await send_topics_list(message)
+    await send_topics_list(message, user_id=message.from_user.id)
 
 
 @topics.message(MainStates.waiting_for_topic, F.text)
@@ -44,6 +44,7 @@ async def handle_topic_message(message: Message, state: FSMContext) -> None:
             await process_topic(message=message, topic=message.text, state=state)
         case 'savetopic':
             save_topic(topic_str=message.text, user_id=message.from_user.id)
+            await message.answer(f'Тема <i><b>{message.text}</b></i> сохранена!')
 
     await state.clear()
 
@@ -89,6 +90,7 @@ async def callback_topic(callback: CallbackQuery, state: FSMContext) -> None:
             await process_topic(message=callback, topic=topic.title, state=state)
         case 'deletetopic':
             delete_topic(topic_id)
+            await callback.message.answer('Тема удалена!')
 
     session.close()
     await state.clear()
