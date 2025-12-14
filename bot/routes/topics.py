@@ -48,11 +48,11 @@ async def handle_topic_message(message: Message, state: FSMContext) -> None:
     await state.clear()
 
 
-async def send_topics_list(message: Message) -> None:
+async def send_topics_list(message: Message, user_id: int) -> None:
     builder = InlineKeyboardBuilder()
     session = create_session()
 
-    user = session.query(User).filter(User.id == message.from_user.id).first()
+    user = session.query(User).filter(User.id == user_id).first()
     topics = user.topics
 
     for i in range(len(topics)):
@@ -84,9 +84,9 @@ async def callback_topic(callback: CallbackQuery, state: FSMContext) -> None:
     
     match command.command:
         case 'findnews':
-            await process_topic(message=callback.message, topic=topic.title, state=state)
+            await process_topic(message=callback, topic=topic.title, state=state)
         case 'analyzenews':
-            await process_topic(message=callback.message, topic=topic.title, state=state)
+            await process_topic(message=callback, topic=topic.title, state=state)
         case 'deletetopic':
             delete_topic(topic_id)
 

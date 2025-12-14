@@ -17,7 +17,7 @@ async def command_findnews_handler(message: Message, state: FSMContext) -> None:
     await state.set_state(MainStates.waiting_for_topic)
 
     await message.answer('Выберете тему из сохранненых или напишите новую.')
-    await send_topics_list(message=message)
+    await send_topics_list(message=message, user_id=message.from_user.id)
 
 
 @news.message(Command(analyzenews_command))
@@ -26,10 +26,10 @@ async def command_analyze_news_handler(message: Message, state: FSMContext) -> N
     await state.set_state(MainStates.waiting_for_topic)
 
     await message.answer('Выберете тему из сохранненых или напишите новую.')
-    await send_topics_list(message=message)
+    await send_topics_list(message=message, user_id=message.from_user.id)
 
 
-async def process_topic(message: Message, topic: str, state: FSMContext) -> None:
+async def process_topic(message: Message | CallbackQuery, topic: str, state: FSMContext) -> None:
     data = await state.get_data()
     command = data['command']
     news = None
@@ -43,9 +43,18 @@ async def process_topic(message: Message, topic: str, state: FSMContext) -> None
             case 'analyzenews':
                 await send_news_analyzis(message=message, news=news)
     except Exception:
-        await message.answer("К сожалению, мы ничего не нашли по вашему запросу. Попробуйте еще раз.")
-        # await message.answer('Выберете тему из сохранненых или напишите новую.')
-        # await send_topics_list(message=message)
+
+        if type(message) == Message:
+            await message.answer('К сожалению, я ничего не нашли по вашему запросу. Попробуйте еще раз.')
+            await message.answer('Выберете тему из сохранненых или напишите новую.')
+
+            await send_topics_list(message=message, user_id=message.from_user.id)
+
+        elif type(message) == CallbackQuery:
+            await message.message.answer('К сожалению, я ничего не нашли по вашему запросу. Попробуйте еще раз.')
+            await message.message.answer('Выберете тему из сохранненых или напишите новую.')
+
+            await send_topics_list(message=message.message, user_id=message.from_user.id)
 
 
 async def send_news(message: Message, news: dict) -> None:
