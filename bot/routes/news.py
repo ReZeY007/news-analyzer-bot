@@ -33,15 +33,22 @@ async def process_topic(message: Message | CallbackQuery, topic: str, state: FSM
     data = await state.get_data()
     command = data['command']
     news = None
-    
+    msg = None
+
+    if  type(message) == Message:
+        msg = message
+    elif type(message) == CallbackQuery:
+        msg = message.message
+
+
     try:
         news = get_news(topic)
 
         match command.command:
             case 'findnews':
-                await send_news(message=message, news=news)
+                await send_news(message=msg, news=news)
             case 'analyzenews':
-                await send_news_analyzis(message=message, news=news)
+                await send_news_analyzis(message=msg, news=news)
     except Exception:
 
         if type(message) == Message:
