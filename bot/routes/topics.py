@@ -61,6 +61,10 @@ async def send_topics_list(message: Message, user_id: int) -> None:
 
     session.close()
 
+    if len(topics) == 0:
+        await message.answer('У вас нету <i>сохранненых</i> тем.')
+        return
+
     await message.answer(text='Сохраненные темы:', reply_markup=builder.as_markup())
 
 
@@ -86,11 +90,14 @@ async def callback_topic(callback: CallbackQuery, state: FSMContext) -> None:
     match command.command:
         case 'findnews':
             await process_topic(message=callback, topic=topic.title, state=state)
+            await callback.message.delete()
+            await callback.message.answer()
         case 'analyzenews':
             await process_topic(message=callback, topic=topic.title, state=state)
+            await callback.message.delete()
         case 'deletetopic':
             delete_topic(topic_id)
-            await callback.message.answer('Тема удалена!')
+            await callback.message.edit_text('Тема удалена!')
 
     session.close()
     await state.clear()

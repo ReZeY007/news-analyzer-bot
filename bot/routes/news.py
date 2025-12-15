@@ -16,8 +16,8 @@ async def command_findnews_handler(message: Message, state: FSMContext) -> None:
     await state.update_data(command = findnews_command)
     await state.set_state(MainStates.waiting_for_topic)
 
-    await message.answer('Выберете тему из сохранненых или напишите новую.')
     await send_topics_list(message=message, user_id=message.from_user.id)
+    await message.answer('Выберете тему из сохранненых или напишите новую.')
 
 
 @news.message(Command(analyzenews_command))
@@ -25,8 +25,8 @@ async def command_analyze_news_handler(message: Message, state: FSMContext) -> N
     await state.update_data(command = analyzenews_command)
     await state.set_state(MainStates.waiting_for_topic)
 
-    await message.answer('Выберете тему из сохранненых или напишите новую.')
     await send_topics_list(message=message, user_id=message.from_user.id)
+    await message.answer('Выберете тему из сохранненых или напишите новую.')
 
 
 async def process_topic(message: Message | CallbackQuery, topic: str, state: FSMContext) -> None:
