@@ -1,15 +1,16 @@
 from aiogram import Router, F
-from aiogram.types import Message, InlineKeyboardButton, CallbackQuery
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 
 from bot.states import MainStates
+from bot.keyboards import get_topics_list
 from bot.commands import savetopic_command, deletetopic_command
+from bot.routes.news import send_news, send_news_analyzis
 
 from database import create_session
 from database.classes import User, Topic
-
+from database.operations.topics import save_topic, delete_topic
 
 topics = Router()
 
@@ -24,24 +25,27 @@ async def command_savetopic_handler(message: Message, state=FSMContext) -> None:
 @topics.message(Command(deletetopic_command))
 async def command_deletetopic_handler(message: Message, state=FSMContext) -> None:
     await state.update_data(command = deletetopic_command)
-    await state.set_state(MainStates.waiting_for_topic)
 
-    await message.answer('Выбери тему, которую хочешь удалить.')
-    await send_topics_list(message, user_id=message.from_user.id)
+    try:
+        topics_list = get_topics_list(user_id=message.from_user.id)
+        await message.answer('Выбери тему, которую хочешь удалить.')
+        await message.answer(text='Сохраненные темы:', reply_markup=topics_list.as_markup())
+    except Exception:
+        await message.answer('У вас нет сохраненных тем.')
+    
+    await state.set_state(MainStates.waiting_for_topic)
 
 
 @topics.message(MainStates.waiting_for_topic, F.text)
 async def handle_topic_message(message: Message, state: FSMContext) -> None:
-    from bot.routes.news import process_topic
-
     data = await state.get_data()
     command = data['command']
     
     match command.command:
         case 'findnews':
-            await process_topic(message=message, topic=message.text, state=state)
+            await send_news(message=message, topic=message.text)
         case 'analyzenews':
-            await process_topic(message=message, topic=message.text, state=state)
+            await send_news_analyzis(message=message, topic=message.text)
         case 'savetopic':
             save_topic(topic_str=message.text, user_id=message.from_user.id)
             await message.answer(f'Тема <i><b>{message.text}</b></i> сохранена!')
@@ -49,39 +53,17 @@ async def handle_topic_message(message: Message, state: FSMContext) -> None:
     await state.clear()
 
 
-async def send_topics_list(message: Message, user_id: int) -> None:
-    builder = InlineKeyboardBuilder()
-    session = create_session()
-
-    user = session.query(User).filter(User.id == user_id).first()
-    topics = user.topics
-
-    for i in range(len(topics)):
-        builder.row(InlineKeyboardButton(text=f'{i + 1}. {topics[i].title}', callback_data=f'topic_{topics[i].id}'))
-
-    session.close()
-
-    if len(topics) == 0:
-        await message.answer('У вас нету <i>сохранненых</i> тем.')
-        return
-
-    await message.answer(text='Сохраненные темы:', reply_markup=builder.as_markup())
-
-
-
 @topics.callback_query(F.data.startswith('topic_'))
 async def callback_topic(callback: CallbackQuery, state: FSMContext) -> None:
-    from bot.routes.news import process_topic
-
     await callback.answer()
 
     st = await state.get_state()
-    if st is None:
+    if st != "MainStates:waiting_for_topic":
         return
 
-    data = callback.data.split('_')
+    callback_data = callback.data.split('_')
     state_data = await state.get_data()
-    topic_id = data[1]
+    topic_id = callback_data[1]
     command = state_data['command']
 
     session = create_session()
@@ -89,11 +71,10 @@ async def callback_topic(callback: CallbackQuery, state: FSMContext) -> None:
     
     match command.command:
         case 'findnews':
-            await process_topic(message=callback, topic=topic.title, state=state)
+            await send_news(message=callback.message, topic=topic.title)
             await callback.message.delete()
-            await callback.message.answer()
         case 'analyzenews':
-            await process_topic(message=callback, topic=topic.title, state=state)
+            await send_news_analyzis(message=callback.message, topic=topic.title)
             await callback.message.delete()
         case 'deletetopic':
             delete_topic(topic_id)
@@ -101,22 +82,3 @@ async def callback_topic(callback: CallbackQuery, state: FSMContext) -> None:
 
     session.close()
     await state.clear()
-
-def save_topic(topic_str: str, user_id: int) -> None:
-    session = create_session()
-
-    user = session.query(User).filter(User.id == user_id).first()
-    user.topics.append(Topic(title=topic_str))
-
-    session.commit()
-    session.close()
-
-
-def delete_topic(topic_id: int) -> None:
-    session = create_session()
-
-    topic = session.query(Topic).filter(Topic.id == topic_id).first()
-    session.delete(topic)
-
-    session.commit()
-    session.close()
